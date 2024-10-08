@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS urls_user_id_idx;

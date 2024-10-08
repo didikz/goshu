@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS urls_user_id_idx ON urls(user_id);

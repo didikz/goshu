@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -9,6 +11,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/jmoiron/sqlx"
 )
 
 type handleFunc func(http.ResponseWriter, *http.Request) error
@@ -28,11 +31,13 @@ func makeHttpHandleFunc(h handleFunc) http.HandlerFunc {
 
 type Server struct {
 	listenAddr string
+	db         *sqlx.DB
 }
 
-func NewServer(listenAddr string) *Server {
+func NewServer(listenAddr string, db *sqlx.DB) *Server {
 	return &Server{
 		listenAddr: listenAddr,
+		db:         db,
 	}
 }
 
@@ -57,8 +62,23 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) error {
 }
 
 func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) error {
-	// slug := chi.URLParam(r, "slug")
+	slug := chi.URLParam(r, "slug")
 	w.Header().Add("Cache-Control", "no-cache")
-	http.Redirect(w, r, "https://didiktrisusanto.dev", http.StatusMovedPermanently)
+	if slug != "" {
+		url := Url{}
+		err := s.db.Get(&url, "SELECT id, slug, original_url, deleted_at FROM urls WHERE urls.slug = $1 LIMIT 1", slug)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return fmt.Errorf("%s", "URL not found")
+			}
+			return err
+		}
+
+		if url.DeletedAt != nil {
+			return fmt.Errorf("%s", "URL not found")
+		}
+
+		http.Redirect(w, r, "https://didiktrisusanto.dev", http.StatusMovedPermanently)
+	}
 	return nil
 }
