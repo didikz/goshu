@@ -78,7 +78,7 @@ func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) erro
 			return fmt.Errorf("%s", "URL not found")
 		}
 
-		http.Redirect(w, r, "https://didiktrisusanto.dev", http.StatusMovedPermanently)
+		http.Redirect(w, r, url.OriginalUrl, http.StatusMovedPermanently)
 	}
 	return nil
 }
