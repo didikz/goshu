@@ -8,10 +8,12 @@ import (
 	"log"
 	"net/http"
 	"path"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
+	"github.com/redis/go-redis/v9"
 )
 
 type handleFunc func(http.ResponseWriter, *http.Request) error
@@ -32,12 +34,14 @@ func makeHttpHandleFunc(h handleFunc) http.HandlerFunc {
 type Server struct {
 	listenAddr string
 	db         *sqlx.DB
+	redis      *redis.Client
 }
 
-func NewServer(listenAddr string, db *sqlx.DB) *Server {
+func NewServer(listenAddr string, db *sqlx.DB, redis *redis.Client) *Server {
 	return &Server{
 		listenAddr: listenAddr,
 		db:         db,
+		redis:      redis,
 	}
 }
 
@@ -66,6 +70,14 @@ func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) erro
 	w.Header().Add("Cache-Control", "no-cache")
 	if slug != "" {
 		url := Url{}
+		cached := s.redis.Get(r.Context(), fmt.Sprintf("slug:%s", slug))
+		if cached.Err() == nil && cached.Val() != "" {
+			bytes, _ := cached.Bytes()
+			_ = json.Unmarshal(bytes, &url)
+			http.Redirect(w, r, url.OriginalUrl, http.StatusMovedPermanently)
+			return nil
+		}
+
 		err := s.db.Get(&url, "SELECT id, slug, original_url, deleted_at FROM urls WHERE urls.slug = $1 LIMIT 1", slug)
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -78,6 +90,8 @@ func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) erro
 			return fmt.Errorf("%s", "URL not found")
 		}
 
+		m, _ := json.Marshal(url)
+		_ = s.redis.Set(r.Context(), fmt.Sprintf("slug:%s", slug), string(m), (time.Minute * 5))
 		http.Redirect(w, r, url.OriginalUrl, http.StatusMovedPermanently)
 	}
 	return nil
