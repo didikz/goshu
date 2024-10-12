@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"time"
 
@@ -57,8 +58,8 @@ func (s *Server) Run() {
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) error {
-	filepath := path.Join("views", "index.html")
-	templ, err := template.ParseFiles(filepath)
+	wd, _ := os.Getwd()
+	templ, err := template.ParseFiles(path.Join(wd, "views/index.html"))
 	if err != nil {
 		return err
 	}
