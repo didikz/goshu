@@ -1,4 +1,4 @@
-package main
+package internal
 
 type Url struct {
 	ID          uint64  `db:"id"`

@@ -1,4 +1,4 @@
-package main
+package internal
 
 type GeneralApiError struct {
 	Error string `json:"error"`

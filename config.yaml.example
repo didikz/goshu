@@ -1,2 +1,0 @@
-port: 3000
-database: postgres://username:pass@localhost:5432/dbname?sslmode=disable
