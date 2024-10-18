@@ -4,13 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
-	"os"
-	"path"
 	"time"
 
+	"github.com/a-h/templ"
+	"github.com/didikz/goshu/views"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jmoiron/sqlx"
@@ -58,12 +57,7 @@ func (s *Server) Run() {
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) error {
-	wd, _ := os.Getwd()
-	templ, err := template.ParseFiles(path.Join(wd, "views/index.html"))
-	if err != nil {
-		return err
-	}
-	return templ.Execute(w, nil)
+	return render(w, r, views.Index())
 }
 
 func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) error {
@@ -96,4 +90,8 @@ func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) erro
 		http.Redirect(w, r, url.OriginalUrl, http.StatusMovedPermanently)
 	}
 	return nil
+}
+
+func render(w http.ResponseWriter, r *http.Request, template templ.Component) error {
+	return template.Render(r.Context(), w)
 }

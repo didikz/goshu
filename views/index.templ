@@ -1,0 +1,48 @@
+package views
+
+import "github.com/didikz/goshu/views/components"
+import "time"
+import "fmt"
+
+func getCurrentYear() int {
+    return time.Now().Year()
+}
+
+templ Index() {
+    <!DOCTYPE html>
+    <html lang="en">
+    @components.Head()
+    <body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+        @components.Header()
+        <main class="flex-grow container mx-auto px-4 py-8">
+            <div class="max-w-2xl mx-auto text-center">
+                <h2 class="text-4xl font-bold mb-4">Shorten Your URLs</h2>
+                <p class="text-xl mb-8">Create concise, shareable links in seconds.</p>
+
+                <form class="mb-8">
+                    <div class="flex">
+                        <input type="url" placeholder="https://your-long-url-here.com" class="flex-grow p-3 rounded-l-lg bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-r-lg transition duration-300">Shorten</button>
+                    </div>
+                </form>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-2">Fast</h3>
+                        <p>Generate short links in an instant.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-2">Reliable</h3>
+                        <p>Your links will always redirect correctly.</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-lg">
+                        <h3 class="text-xl font-semibold mb-2">Secure</h3>
+                        <p>We prioritize the safety of your data.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+        @components.Footer(fmt.Sprintf("%d", getCurrentYear()))
+    </body>
+    </html>
+}
