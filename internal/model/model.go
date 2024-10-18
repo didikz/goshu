@@ -1,4 +1,16 @@
-package internal
+package model
+
+type GeneralApiError struct {
+	Error string `json:"error"`
+}
+
+type IndexResponse struct {
+	Message string `json:"message"`
+}
+
+type ShortenUrlResult struct {
+	Url string `json:"url"`
+}
 
 type Url struct {
 	ID          uint64  `db:"id"`

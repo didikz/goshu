@@ -13,12 +13,14 @@ templ Index() {
                 <h2 class="text-4xl font-bold mb-4">Shorten Your URLs</h2>
                 <p class="text-xl mb-8">Create concise, shareable links in seconds.</p>
 
-                <form class="mb-8">
+                <form class="mb-8" action="/shorten" hx-post="/shorten" hx-trigger="submit" hx-target="#shorten-url" enctype="application/x-www-form-urlencoded">
                     <div class="flex">
-                        <input type="url" placeholder="https://your-long-url-here.com" class="flex-grow p-3 rounded-l-lg bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-r-lg transition duration-300">Shorten</button>
+                        <input type="url" name="url" id="url" placeholder="https://your-long-url-here.com"class="flex-grow p-3 rounded-l-lg bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit" id="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-r-lg transition duration-300">Shorten</button>
                     </div>
                 </form>
+
+                <div class="py-3 px-6 mb-4 rounded-r-md bg-blue-600 text-white" id="shorten-url"></div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div class="bg-gray-800 p-6 rounded-lg">
@@ -37,6 +39,17 @@ templ Index() {
             </div>
         </main>
         @components.Footer()
+        <script>
+            document.body.addEventListener('htmx:afterOnLoad', function(event) {
+            if (event.detail.elt.id === 'shorten-url') {
+                var jsonResponse = JSON.parse(event.detail.xhr.responseText);
+                var url = jsonResponse.url;
+                
+                // Now you can use the URL as needed, for example:
+                event.detail.elt.innerHTML = '<a href="' + url + '">' + url + '</a>';
+            }
+        });
+        </script>
     </body>
     </html>
 }

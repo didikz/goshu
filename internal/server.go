@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/a-h/templ"
+	"github.com/didikz/goshu/internal/model"
 	"github.com/didikz/goshu/views"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,10 +23,11 @@ func WriteResponseJSON(w http.ResponseWriter, httpStatus int, v any) error {
 	w.WriteHeader(httpStatus)
 	return json.NewEncoder(w).Encode(v)
 }
+
 func makeHttpHandleFunc(h handleFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := h(w, r); err != nil {
-			WriteResponseJSON(w, http.StatusBadRequest, GeneralApiError{Error: err.Error()})
+			WriteResponseJSON(w, http.StatusBadRequest, model.GeneralApiError{Error: err.Error()})
 		}
 	}
 }
@@ -51,20 +52,33 @@ func (s *Server) Run() {
 
 	router.HandleFunc("/", makeHttpHandleFunc(s.handleIndex))
 	router.HandleFunc("/{slug}", makeHttpHandleFunc(s.handleSlugRedirect))
+	router.HandleFunc("/shorten", makeHttpHandleFunc(s.handleCreateShortenUrl))
 
 	log.Println("Server running at", s.listenAddr)
 	http.ListenAndServe(s.listenAddr, router)
 }
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) error {
-	return render(w, r, views.Index())
+	template := views.Index()
+	return template.Render(r.Context(), w)
+}
+
+func (s *Server) handleCreateShortenUrl(w http.ResponseWriter, r *http.Request) error {
+	err := r.ParseForm()
+	if err != nil {
+		return err
+	}
+
+	url := r.FormValue("url")
+	log.Println("data", url)
+	return WriteResponseJSON(w, http.StatusCreated, model.ShortenUrlResult{Url: url})
 }
 
 func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) error {
 	slug := chi.URLParam(r, "slug")
 	w.Header().Add("Cache-Control", "no-cache")
 	if slug != "" {
-		url := Url{}
+		url := model.Url{}
 		cached := s.redis.Get(r.Context(), fmt.Sprintf("slug:%s", slug))
 		if cached.Err() == nil && cached.Val() != "" {
 			bytes, _ := cached.Bytes()
@@ -90,8 +104,4 @@ func (s *Server) handleSlugRedirect(w http.ResponseWriter, r *http.Request) erro
 		http.Redirect(w, r, url.OriginalUrl, http.StatusMovedPermanently)
 	}
 	return nil
-}
-
-func render(w http.ResponseWriter, r *http.Request, template templ.Component) error {
-	return template.Render(r.Context(), w)
 }
